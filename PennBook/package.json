@@ -12,7 +12,7 @@
     "body-parser": "*",
     "dynamodb": "*",
     "ejs": "*",
-    "express": "3.3.8",
+    "express": "4.17.1",
     "fs": "*",
     "joi": "*",
     "lru-cache": "*",
