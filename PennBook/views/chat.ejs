@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+  <title>Chat Room</title>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="https://code.jquery.com/jquery-1.11.1.js"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+
+  <script type="text/javascript">
+
+    /*Information we have here: chatID, sessionID, user*/
+
+    function addUser() {
+      var newUser = document.forms['searchForm']['uname'].value;
+      $.post('/addtochat', {newUser: newUser}, function(data) {
+        //send back the new chatID from /addtochat route as data
+        if (data == 'failure') {
+          document.getElementById('err_msg').innerHTML = "<font color=\"red\">Error: username does not match one of your friends</font>";
+          document.getElementById('uname').value = '';
+        } else {
+          var members = '<%=chatID%>'; 
+          membersArr = members.split('|');
+          if (membersArr.indexOf(newUser) === -1) {
+            membersArr.push(newUser);
+            membersArr = membersArr.sort();
+            var chatID = '';
+            function func(element) {
+              chatID = chatID + element + '|';
+            };
+            membersArr.forEach(func);
+            var leng = chatID.length;
+            chatID = chatID.substring(0, leng - 1);
+            var personalSocket = io.connect('/' + '<%=user%>');
+            personalSocket.emit('new chat ID', chatID, '<%=sessionID%>');
+            var newUserSocket = io.connect('/' + newUser);
+            newUserSocket.emit('chat notification','<%=user%>', '<%=sessionID%>', chatID);
+            //location.href = '/chat?sessionID='+'<%=sessionID%>'+'&chatID='+chatID;
+          } else {
+            document.getElementById('err_msg').innerHTML = "<font color=\"red\">Error: user is already in the chat</font>";
+            document.getElementById('uname').value = '';
+          }
+          
+        }
+      });
+    };
+
+    function leaveChat(socket) {
+      socket.disconnect();
+      var members = '<%=chatID%>'; 
+      var user = '<%=user%>';
+      membersArr = members.split('|');
+      membersArr.splice(membersArr.indexOf(user), 1);
+      membersArr = membersArr.sort();
+      var chatID2 = '';
+      function func(element) {
+        chatID2 = chatID2 + element + '|';
+      };
+      membersArr.forEach(func);
+      var leng = chatID2.length;
+      chatID2 = chatID2.substring(0, leng - 1);
+      var personalSocket2 = io.connect('/' + '<%=user%>');
+      console.log(chatID2);
+      personalSocket2.emit('new chat ID', chatID2, '<%=sessionID%>');
+      location.href = '/startchat';
+    };
+
+    function connectionFunction() {
+      console.log("FUNCTION()  HAS   BEEN   CALLED")
+      document.getElementById("user").innerHTML = '<%=user%>';
+
+
+      var personalSocket = io.connect('/' + '<%=user%>');
+      personalSocket.on('chat notification', function(sender, sessionID, chatID) {
+          document.getElementById('notif').innerHTML = 
+          '<a href=\'\\joinchat?sessionID='+sessionID+'&chatID='+chatID+'\'>'+sender+' has invited you to join a chat. Click to join</a>'; 
+      });
+
+      var socket = io.connect('/' + '<%=sessionID%>');
+      console.log('<%=user%>' + "SOCKET CREATED OF sessionID " + '<%=sessionID%>');
+      
+      $('#input_text_form').submit(function(e) {
+        e.preventDefault(); // prevents page reloading
+        var message = $('#m').val();
+        if (message == '') {
+          return false;
+        } else {
+          personalSocket.emit('chat message', message, '<%=user%>', '<%=chatID%>', '<%=sessionID%>' );
+          document.getElementById('m').value = '';
+          return false;
+        }
+      });
+
+      /*
+      $('#logout_id').onclick(function(e) {
+        e.preventDefault();
+        console.log("At the correct event");
+      })
+      */  
+
+      $('#leaveButton').submit(function(event) {
+        event.preventDefault();
+        leaveChat(socket);
+      });
+      // sends the message to all others on the socket??
+      socket.on('chat message', function(msg, user) {
+        $('#messages').append("" + user + ": " + msg + "<br>");
+      });
+
+      socket.on('new chat ID', function(chatID) {
+        location.href = '/chat?sessionID='+'<%=sessionID%>'+'&chatID='+chatID;
+      });
+    };
+
+    function getOldChatData() {
+      var chatID = '<%=chatID%>';
+      $.post('/getoldchatdata', {id: chatID}, function(data) {
+        var json = data.Items;
+        for (var i = 0; i < json.length; i++) {
+          var message = json[i].message_value;
+          var sender = json[i].sender;
+          $('#messages').append("" + sender + ": " + message + "<br>");
+        }
+      });
+    };
+
+    function showConcurrentUsers() {
+      $.get('/getconcurrentusers', function(data) {
+        if (data) {
+          document.getElementById('concrrent_users').innerHTML = data;
+        }
+      });
+    };
+
+    function whoIsInChat() {
+      var chatID = '<%=chatID%>';
+      var arr = chatID.split('|');
+      var str = '';
+      for (var k = 0; k < arr.length; k++) {
+        var person = arr[k];
+        str = str + person + ' ';
+      }
+      document.getElementById('people_in_chat').innerHTML = str;
+    };
+
+    /*
+    function confirmExit() {
+      alert('Are you sure you want to exit?');
+    };
+    */
+
+    window.onload = function() {getOldChatData(); connectionFunction(); showConcurrentUsers(); whoIsInChat()};
+    //window.onbeforeunload = confirmExit();
+
+  </script>
+</head>
+  <body>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+      <span class="navbar-brand center" href="/profile">PennBook</span>
+      <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
+        <div class="navbar-nav">
+          <a class="nav-item nav-link" href="/profile">Profile</a>
+          <a class="nav-item nav-link" href="/home">Home</a>
+          <a class="nav-item nav-link active" href="/startchat" target="_blank">NewChat</a>
+        </div>
+      </div>
+      <div>
+        <a id = "logout_id" href="/logout">Logout</a>
+      </div>
+    </nav>
+    <div><font color = 'green'><span id = 'notif'></span></font></div>
+    <h1><span id = "user"></span>'s Chat Room</h1> 
+    <h4>Welcome to your chat room. Please have some wonderful conversations!</h4>
+    <form id = 'leaveButton' onsubmit = 'return false'><input type = 'submit' value = 'Leave Chat'></form>
+    Friends also online right now: <span id = 'concrrent_users'></span><br>
+    People currently in chat room: <span id = 'people_in_chat'></span><br>
+    <form id = 'searchForm' name = 'searchForm' onsubmit="addUser(); return false">
+      <input type = 'text' id = 'uname' name = 'uname' placeholder="add a friend to the chat (enter username)">
+      <input type = 'submit' value = 'Add to Chat'>
+    </form>
+    <span id = "err_msg"></span> <br> </span>
+    <ul id="messages"></ul>
+    <form onsubmit = "return false" id = 'input_text_form'>
+      <input id="m" autocomplete="off" /><input type="submit" value="Send">
+    </form>
+
+</body>
+</html>
+

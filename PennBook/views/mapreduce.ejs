@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mapreduce</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<script type="text/javascript">
+	function runMapReduce() {
+		$.get('/runmapreduce', function(data) {
+			if (data == 'Success') {
+				document.getElementById('result').innerHTML = 'Success';
+			}
+		});
+	};
+	window.onload = function() {runMapReduce()}
+</script>
+</head>
+<body>
+	<br>
+	<span id = 'result'></span>
+	<br>
+	<div><a href = '/home'>Click here to go back home</a></div>
+	<br>
+	<div><a href = "/logout">Click here to logout</a></div>
+</body>
+</html>

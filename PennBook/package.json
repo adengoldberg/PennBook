@@ -1,0 +1,21 @@
+{
+  "name": "Final_Project",
+  "description": "Facebook",
+  "version": "0.0.1",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "async": "^3.1.0",
+    "aws-sdk": "*",
+    "bcrypt": "*",
+    "body-parser": "*",
+    "dynamodb": "*",
+    "ejs": "*",
+    "express": "3.3.8",
+    "fs": "*",
+    "joi": "*",
+    "lru-cache": "*",
+    "socket.io": "^2.3.0"
+  }
+}

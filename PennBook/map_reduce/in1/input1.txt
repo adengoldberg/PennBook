@@ -1,0 +1,10 @@
+Cooking	adele
+Harker	adele
+Golf	admin
+Penn	admin
+Cooking	jp
+Columbia	jp
+Studying for management	nick
+Penn	nick
+Watching Netflix	sid
+Columbia	sid

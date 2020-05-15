@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+	<title>Profile</title>
+	<style type ="text/css" >
+	   .footer{ 
+	       position: fixed;         
+	       bottom: 5px;
+	   }  
+	</style>
+	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script type="text/javascript">
+
+		function connectionFunction() {
+			$.get('/getusername', function(data) {
+		      var personalSocket = io.connect('/' + data);
+		      personalSocket.on('chat notification', function(sender, sessionID, chatID) {
+		          document.getElementById('notif').innerHTML = 
+		          	'<a href=\'\\joinchat?sessionID='+sessionID+'&chatID='+chatID+'\'>'+sender+' has invited you to join a chat. Click to join</a>'; 
+		      });
+			});
+		};
+
+		function loadProfile() {
+			$.getJSON('/profiledata', function(data) {
+				if (data === "ERROR") {
+					console.log('Error loading profile');
+				} else {
+					var profile_data = data.data;
+					var friends = JSON.parse(profile_data.friends);
+					var friends_html = ''
+					for (var i = 0; i < friends.length; i++) {
+						friends_html = friends_html + friends[i] + ', ';
+					}
+					friends_html = friends_html.replace(/,([^,]*)$/, '$1');
+					document.getElementById('friends_list').innerHTML = friends_html;
+					var username = data.username;
+					document.getElementById("user").innerHTML = username;
+					document.getElementById('first_name').innerHTML = profile_data.firstName;
+					document.getElementById('last_name').innerHTML = profile_data.lastName;
+					document.getElementById('email').innerHTML = profile_data.email;
+					document.getElementById('affiliation').innerHTML = profile_data.affiliation;
+					document.getElementById('interests').innerHTML = profile_data.interests;
+					document.getElementById('birthday').innerHTML = profile_data.birthday;
+					document.getElementById('status').innerHTML = profile_data.status;
+				}
+			});
+		};
+		function loadPosts() {
+			$.getJSON('/getwall', function(data) {
+				if (data) {
+					var html = '';
+					for (var i = data.length - 1; i >= 0; i--) {
+						var message = data[i].message;
+						var poster = data[i].poster;
+						var time = data[i].time;
+						html = html + '<br><b>'+poster+' Posted:</b><br>'+message+'<br>Time: '+time+'<br>';
+					}
+					document.getElementById('posts_content').innerHTML = html;
+				} else {
+					document.getElementById('posts_content').innerHTML = 'No posts yet!<br><br>';
+				}
+			});
+		};
+
+		var cache = -1;
+		function refreshFunction() {
+			$.getJSON('/getwall', function(data) {
+				if (data) {
+					if (data.length !== cache) {
+						loadPosts();
+						cache = data.length;
+					}
+				}
+			});
+		};
+
+		var refreshTime = function() {
+    		refreshFunction();
+    		setTimeout(refreshTime, 5000);
+    	};
+    
+    	$(document).ready(function() {
+    		setTimeout(refreshTime, 5000);
+   		});
+
+		window.onload = function() {loadProfile(); loadPosts(); connectionFunction()}
+	</script>
+</head>
+<body>
+	<br>
+	<div><font color = 'green'><span id = 'notif'></span></font></div>
+	<h1><span id = "user"></span></h1>
+	
+	<div>First Name: <span id = "first_name"></span></div>
+	<div>Last Name: <span id = "last_name"></span></div>
+	<div>Email: <span id = "email"></span></div>
+	<div>Affiliation: <span id = "affiliation"></span></div>
+	<div>Interests: <span id = "interests"></span></div>
+	<div>Birthday: <span id = "birthday"></span></div>
+	<div>Status: <span id = "status"></span></div>
+	<div>Friends: <span id = "friends_list"></span></div>
+
+	<a href = '/editprofile'>Change your profile</a>
+	<br>
+	<h3>Wall Posts:</h3>
+	<span id = "posts_content"></span>
+	<a href = '/home'>Back to home</a>
+
+	<div><a href = "/logout">Click here to logout</a></div>
+</body>
+</html>

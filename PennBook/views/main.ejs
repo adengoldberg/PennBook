@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html>
+<head>
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<title>Login</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<style type="text/css">
+	body {
+		background-color: white;
+	}
+	.login-box {
+		max-width: 600px;
+		border-width: 2px;
+		box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+		margin: 100px auto;
+
+	}
+	.login-box .form-control {
+		padding-top: 15px;
+		margin-bottom: 15px;
+	}
+	.header {
+		text-align: center;
+		font-weight: 700;
+		color: #3b5998;
+		font-size: 24px;
+		padding-top: 10px;
+		padding-bottom: 10px;
+
+	}
+	.form-text {
+		text-align: center;
+	}
+	.inner-container {
+		padding-left: 30px;
+		padding-right: 30px;
+		padding-bottom: 10px;
+	}
+	.error-msg {
+		color: red;
+		padding-bottom: 5px;
+		padding-top: 5px;
+	}
+	.form-bottom {
+		text-align: center;
+		padding-top: 5px;
+	}
+</style>
+<script type="text/javascript">
+	function validateForm() {
+		$('#login_err').hide();
+		var user_name = document.forms["loginForm"]["user_name_input"].value;
+		var password = document.forms["loginForm"]["password_input"].value;
+		if (user_name === "") {
+			document.getElementById('err_msg').innerHTML = "<font color=\"red\">Please enter a username<p></font>";
+			return false;
+		} else if (password === "") {
+			document.getElementById('err_msg').innerHTML = "<font color=\"red\">Please enter a password<p></font>";
+			return false;
+		}
+		$.post('/checklogin', {username: document.getElementById('user_name_input').value, password: document.getElementById('password_input').value}, 
+			function(data) {
+				if (data === 'Incorrect Password') {
+					document.getElementById('err_msg').innerHTML = "<font color=\"red\">Incorrect Password<p></font>";
+				} else if (data === 'Username Not Found') {
+					document.getElementById('err_msg').innerHTML = "<font color=\"red\">Username Not Found<p></font>";
+				} else if (data === 'Success') {
+					//Create the user profile
+					location.href = '/home';
+				}
+			});
+	};
+</script>
+</head>
+<body>
+
+<div class = "login-box">
+	<div class = "inner-container">
+		<div class = "header">PennBook</div>
+		<div class = "form-text">Already have an account? Login below:</div>
+		<div class = "error-msg" id = "login_err"><%= login_error_msg %></div>
+		<span id = "err_msg"></span>
+		<form name = "loginForm" onsubmit = "validateForm(); return false">
+			<input type = "text" id = "user_name_input" name = "user_name_input" size = "25" class = "form-control" placeholder = "Username">
+			<input type = "text" id = "password_input" name = "password_input" size = "25" class = "form-control" placeholder = "Password">
+			<input type="submit" value="Login" class="btn btn-lg btn-primary btn-block">
+		</form>
+		<div class = "form-bottom">Don't have an account. <a href = "/signup">Signup here!</a></div>
+	</div>
+</div>
+</body>
+</html>
